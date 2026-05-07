@@ -1,23 +1,41 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Part 1: File and Directory Exploration
-echo "Welcome to the Interactive File and Directory Explorer!"
+SIZES=(
+  "B"
+  "KB"
+  "MB"
+  "GB"
+)
+INDEX=0
+NUMCHARS=0
 
-while true; do
-    # List all files and directories in the current path
-    echo "Files and Directories in the Current Path:"
-    ls -lh
-
-    # Part 2: Character Counting
-    read -p "Enter a line of text (Press Enter without text to exit): " input
-
-    # Exit if the user enters an empty string
-    if [ -z "$input" ]; then
-        echo "Exiting the Interactive Explorer. Goodbye!"
-        break
+make_readable() {
+  INDEX=0
+  while true; do
+    if (( BYTES > 1000 )); then
+      BYTES=$(( BYTES/1000 ))
+      ((INDEX++))
+    else
+      break
     fi
+  done
+}
 
-    # Calculate and print the character count for the input line
-    char_count=$(echo -n "$input" | wc -m)
-    echo "Character Count: $char_count"
+echo 'Welcome to the Interactive File and Directory Explorer!'
+echo -e "\nFiles and Directories in the Current Path:"
+
+for file in *; do
+  BYTES=$(stat -c '%s' $file)
+  make_readable
+  echo -n '- '
+  printf '%s (%d %s)\n' "$file" "$BYTES" "${SIZES[$INDEX]}" 
 done
+while read -p "Enter a line of text (Enter without text to exit): " line; do
+  if [[ -z "$line" ]]; then
+    break
+  fi
+  size=${#line}
+  NUMCHARS=$(( NUMCHARS += size ))
+done
+echo "Character Count: $NUMCHARS"
+
